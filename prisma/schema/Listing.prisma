@@ -1,0 +1,60 @@
+model Listing {
+    id      String @id @default(cuid())
+    ownerId String
+    slug    String @unique
+
+    titleAr       String
+    titleEn       String
+    descriptionAr String?
+    descriptionEn String?
+
+    category ListingCategory
+    type     ListingType
+    purpose  ListingPurpose
+
+    price Float
+    area  Float
+
+    city     String
+    district String?
+
+    rooms       Int?
+    livingRooms Int?
+    bathRooms   Int?
+
+    facing      Facing?
+    streetWidth Float?
+
+    facing2      Facing?
+    streetWidth2 Float?
+
+    facing3      Facing?
+    streetWidth3 Float?
+
+    floor       Int?
+    totalFloors Int?
+
+    status     ListingStatus @default(active)
+    isFeatured Boolean       @default(false)
+
+    expiresAt DateTime?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+
+    viewCount Int @default(0)
+
+    owner  User           @relation("ListingOwner", fields: [ownerId], references: [id])
+    images ListingImage[]
+
+    @@index([ownerId])
+    @@index([slug])
+    @@index([status])
+    @@index([city])
+    @@index([category])
+    @@index([type])
+    @@index([purpose])
+    @@index([isFeatured])
+    @@index([expiresAt])
+    @@index([createdAt])
+    @@index([status, city, category, purpose])
+}

@@ -1,0 +1,13 @@
+model Settings {
+  id            String @id @default(cuid())
+  nameAr        String @default("")
+  nameEn        String @default("")
+  phone         String @default("")
+  whatsapp      String @default("")
+  email         String @default("")
+  address       String @default("")
+  descriptionAr String @default("")
+  descriptionEn String @default("")
+  instagram     String @default("")
+  twitter       String @default("")
+}

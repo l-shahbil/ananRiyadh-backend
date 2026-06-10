@@ -1,0 +1,81 @@
+enum Role {
+  admin
+  staff
+}
+
+enum UserStatus {
+  active
+  suspended
+}
+
+enum ListingCategory {
+  residential
+  commercial
+  industrial
+  land
+}
+
+enum ListingType {
+  apartment
+  floor
+  building
+  villa
+  duplex
+  palace
+  townhouse
+  studio
+  room
+  office
+  showroom
+  station
+  warehouse
+  shop
+  workshop
+  factory
+  depot
+  residential_land
+  commercial_land
+  industrial_land
+}
+
+enum ListingPurpose {
+  sale
+  rent
+}
+
+enum ListingStatus {
+  active
+  hidden
+  completed
+  expired
+}
+
+enum Facing {
+  north
+  south
+  east
+  west
+  corner
+  three_sides
+}
+
+enum RequestType {
+  find_property
+  post_listing
+}
+
+enum RequestStatus {
+  new
+  done
+}
+
+enum Desire {
+  buy
+  rent
+  sale
+}
+
+enum FamilyType {
+  singles
+  families
+}

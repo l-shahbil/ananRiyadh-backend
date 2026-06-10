@@ -1,0 +1,13 @@
+model InternalOffer {
+  id        String   @id @default(cuid())
+  authorId  String
+  content   String
+  imageUrl  String?
+  cloudinaryImageId  String?
+  createdAt DateTime @default(now())
+
+  author User @relation("OfferAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([createdAt])
+}
