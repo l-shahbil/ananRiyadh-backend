@@ -10,7 +10,7 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "target": "esnext",
-    "types": [],
+    "types": ["node"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -44,6 +44,7 @@
   },
      "exclude": [
     "node_modules",
+    "dist",
     "prisma.config.ts",
     "prisma/seed.ts"
   ]
