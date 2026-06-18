@@ -180,82 +180,67 @@
       return listing;
     },
 
-    async getSimilarListings(slug: string) {
-      const listing = await prisma.listing.findUnique({
-        where: { slug },
-        select: { id: true, category: true, city: true, purpose: true, type: true },
-      });
+   async getSimilarListings(slug: string) {
+  const listing = await prisma.listing.findUnique({
+    where: { slug },
+    select: { id: true, category: true, city: true, purpose: true, type: true },
+  });
 
-      if (!listing) throw new AppError('الإعلان غير موجود', 404);
+  if (!listing) throw new AppError('الإعلان غير موجود', 404);
 
-      const baseSelect = {
-        id: true,
-        slug: true,
-        titleAr: true,
-        titleEn: true,
-        category: true,
-        type: true,
-        purpose: true,
-        price: true,
-        city: true,
-        district: true,
-        area: true,
-        images: {
-          take: 1,
-          orderBy: { sortOrder: 'asc' as const },
-          select: { url: true },
-        },
-      };
-
-      const excludeId = { NOT: { id: listing.id } };
-      const baseWhere = {
-        status: ListingStatus.active,
-        category: listing.category,
-        purpose: listing.purpose,
-        ...excludeId,
-      };
-
-      // Degree 1 — same category + purpose + city + type
-      let similar = await prisma.listing.findMany({
-        where: { ...baseWhere, city: listing.city, type: listing.type },
-        take: 4,
-        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-        select: baseSelect,
-      });
-
-      // Degree 2 — same category + purpose + city
-      if (similar.length < 4) {
-        const existingIds = similar.map((l) => l.id);
-        const more = await prisma.listing.findMany({
-          where: {
-            ...baseWhere,
-            city: listing.city,
-            NOT: { id: { in: [listing.id, ...existingIds] } },
-          },
-          take: 4 - similar.length,
-          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-          select: baseSelect,
-        });
-        similar = [...similar, ...more];
-      }
-
-      // Degree 3 — same category + purpose only
-      if (similar.length < 4) {
-        const existingIds = similar.map((l) => l.id);
-        const more = await prisma.listing.findMany({
-          where: {
-            ...baseWhere,
-            NOT: { id: { in: [listing.id, ...existingIds] } },
-          },
-          take: 4 - similar.length,
-          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-          select: baseSelect,
-        });
-        similar = [...similar, ...more];
-      }
-
-      return similar;
+  const baseSelect = {
+    id: true,
+    slug: true,
+    titleAr: true,
+    titleEn: true,
+    category: true,
+    type: true,
+    purpose: true,
+    price: true,
+    city: true,
+    district: true,
+    area: true,
+    images: {
+      take: 1,
+      orderBy: { sortOrder: 'asc' as const },
+      select: { url: true },
     },
+  };
+
+  const orderBy = [{ isFeatured: 'desc' as const }, { createdAt: 'desc' as const }];
+  const similar: typeof listing[] = [];
+
+  const fetchMore = async (where: object) => {
+    const existingIds = [listing.id, ...similar.map((l) => l.id)];
+    const needed = 4 - similar.length;
+    if (needed <= 0) return;
+
+    const results = await prisma.listing.findMany({
+      where: { ...where, NOT: { id: { in: existingIds } } },
+      take: needed,
+      orderBy,
+      select: baseSelect,
+    });
+
+    similar.push(...results);
+  };
+
+  const base = { status: ListingStatus.active };
+
+  // Degree 1 — same category + purpose + city + type
+  await fetchMore({ ...base, category: listing.category, purpose: listing.purpose, city: listing.city, type: listing.type });
+
+  // Degree 2 — same category + purpose + city
+  await fetchMore({ ...base, category: listing.category, purpose: listing.purpose, city: listing.city });
+
+  // Degree 3 — same category + purpose
+  await fetchMore({ ...base, category: listing.category, purpose: listing.purpose });
+
+  // Degree 4 — any active listings (fallback)
+  await fetchMore({ ...base });
+
+  return similar;
+},
 
 
       async createListing(ownerId: string, data: CreateListingData) {
