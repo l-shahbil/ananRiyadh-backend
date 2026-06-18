@@ -12,6 +12,8 @@ import settings from './features/setting/settings.routes.js';
 import sitemapRouter from './features/sitemap/sitemap.routes.js';
 import { startCronJobs } from './shared/cron/jobs.js';
 import { errorMiddleware } from './shared/middleware/Error.middleware.js';
+import contactRouter from './features/contact/contact.routes.js';
+
 
 const app = express();
 
@@ -36,6 +38,7 @@ app.use('/api/staff', staffRouter);
 app.use('/api/media', mediaRouter);
 app.use('/api/internalOffers', inernalOffers);
 app.use('/api/settings', settings);
+app.use('/api/contact', contactRouter);
 app.use('/', sitemapRouter);
 
 // Start cron jobs
