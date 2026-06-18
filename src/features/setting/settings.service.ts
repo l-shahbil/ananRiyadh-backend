@@ -15,21 +15,23 @@ export const settingsService = {
     return settings;
   },
 
-  async updateSettings(data: UpdateSettingsInput) {
-    return prisma.settings.update({
-      where: { id: 'default' },
-       data: {
+ async updateSettings(data: UpdateSettingsInput) {
+  return prisma.settings.update({
+    where: { id: 'default' },
+    data: {
       ...(data.nameAr !== undefined && { nameAr: data.nameAr }),
       ...(data.nameEn !== undefined && { nameEn: data.nameEn }),
       ...(data.phone !== undefined && { phone: data.phone }),
       ...(data.whatsapp !== undefined && { whatsapp: data.whatsapp }),
       ...(data.email !== undefined && { email: data.email }),
-      ...(data.address !== undefined && { address: data.address }),
+      ...(data.addressAr !== undefined && { addressAr: data.addressAr }),
+      ...(data.addressEn !== undefined && { addressEn: data.addressEn }),
       ...(data.descriptionAr !== undefined && { descriptionAr: data.descriptionAr }),
       ...(data.descriptionEn !== undefined && { descriptionEn: data.descriptionEn }),
       ...(data.instagram !== undefined && { instagram: data.instagram }),
-      ...(data.twitter !== undefined && { twitter: data.twitter }),
+      ...(data.tiktok !== undefined && { tiktok: data.tiktok }),
+      ...(data.snapshat !== undefined && { snapshat: data.snapshat }),
     },
-    });
-  },
+  });
+},
 };

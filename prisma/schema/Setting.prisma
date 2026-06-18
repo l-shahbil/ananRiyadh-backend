@@ -5,9 +5,11 @@ model Settings {
   phone         String @default("")
   whatsapp      String @default("")
   email         String @default("")
-  address       String @default("")
+  addressAr       String @default("")
+  addressEn       String @default("")
   descriptionAr String @default("")
   descriptionEn String @default("")
   instagram     String @default("")
-  twitter       String @default("")
+  tiktok       String @default("")
+  snapshat       String @default("")
 }
