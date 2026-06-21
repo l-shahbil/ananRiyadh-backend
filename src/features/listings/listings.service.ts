@@ -329,7 +329,7 @@ async getMyStats(requesterId: string, isAdmin: boolean, ownerIdQuery: string | u
 
   return { active, completed, expiringThisMonth };
 },
-      async createListing(ownerId: string, data: createListingInput) {
+async createListing(ownerId: string, data: createListingInput) {
         const slug = await generateSlug(data.titleAr, data.city);
 
         const listing = await prisma.listing.create({
@@ -345,7 +345,7 @@ async getMyStats(requesterId: string, isAdmin: boolean, ownerIdQuery: string | u
         return listing;
       },
 
-    async updateListing(
+async updateListing(
   id: string,
   requesterId: string,
   isAdmin: boolean,

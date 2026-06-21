@@ -2,7 +2,7 @@ model Listing {
     id      String @id @default(cuid())
     ownerId String
     slug    String @unique
-    AdNumber   Int 
+    AdNumber   Int?
 
     titleAr       String
     titleEn       String
