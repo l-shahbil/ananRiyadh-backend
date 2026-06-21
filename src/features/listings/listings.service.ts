@@ -402,7 +402,7 @@ async updateListing(
       ...(data.floor !== undefined && { floor: data.floor }),
       ...(data.totalFloors !== undefined && { totalFloors: data.totalFloors }),
 
-      ...(data.adNumber !== undefined && { adNumber: data.adNumber }),
+      ...(data.AdNumber !== undefined && { AdNumber: data.AdNumber }),
       ...(data.expiresAt !== undefined && { expiresAt: data.expiresAt }),
 
       ...(slug && { slug }),
