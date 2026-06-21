@@ -1,11 +1,13 @@
 import { prisma } from '../../shared/config/prisma.js';
-import { Role} from "@prisma/client"
+import { Role, RequestType, RequestStatus } from "@prisma/client"
+import { AppError } from '../../shared/utils/error.js';
 import type { CreateRequestInput } from './requests.validator.js';
 import { sendRequestNotification } from '../../shared/utils/telegram.js';
 
 
-export const requestService =  {
- async createRequest(input: CreateRequestInput) {
+export const requestService = {
+
+  async createRequest(input: CreateRequestInput) {
     const request = await prisma.request.create({
       data: {
         type: input.type,
@@ -23,34 +25,80 @@ export const requestService =  {
       },
     });
 
-    // send telegram notification to admin
     await sendRequestNotification(request);
 
     return request;
   },
 
-  async getRequests(userId: string, role: string) {
-    // admin sees all, staff sees only assigned
-    const where = role === Role.admin ? {} : { assignedTo: userId };
+  // BR-024: admin sees everything — staff sees find_property only,
+  // including ones already handled by other staff (BR-037: transparency on who handled it)
+  async getRequests(role: Role) {
+    const where = role === Role.admin ? {} : { type: RequestType.find_property };
 
-    return await prisma.request.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        assignee: {
-          select: { id: true, email: true, phone: true },
+    const [requests, pendingCounts] = await Promise.all([
+      prisma.request.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          assignee: { select: { id: true, name: true, phone: true } },
         },
-      },
-    });
+      }),
+      prisma.request.groupBy({
+        by: ['type'],
+        where: { status: RequestStatus.new },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const findPropertyPending =
+      pendingCounts.find((c) => c.type === RequestType.find_property)?._count._all ?? 0;
+    const postListingPending =
+      pendingCounts.find((c) => c.type === RequestType.post_listing)?._count._all ?? 0;
+
+    return {
+      requests,
+      stats: { findPropertyPending, postListingPending },
+    };
   },
 
-  async markAsDone(requestId: string, userId: string) {
-    return await prisma.request.update({
-      where: { id: requestId },
-      data: {
-        status: 'done',
-        assignedTo: userId,
+  // find_property: any staff or admin can claim it (race — first one wins)
+  // post_listing: admin only
+  async markAsDone(requestId: string, userId: string, role: Role) {
+    const allowedTypes: RequestType[] =
+      role === Role.admin
+        ? [RequestType.find_property, RequestType.post_listing]
+        : [RequestType.find_property];
+
+    // Single atomic operation — claims the request only if it's still 'new'
+    // AND its type is allowed for this role. No separate read-then-write step.
+    const result = await prisma.request.updateMany({
+      where: {
+        id: requestId,
+        status: RequestStatus.new,
+        type: { in: allowedTypes },
       },
+      data: { status: RequestStatus.done, assignedTo: userId },
     });
-  }
+
+    if (result.count === 0) {
+      // Failure path only — determine the exact reason for a precise error
+      const request = await prisma.request.findUnique({
+        where: { id: requestId },
+        select: { type: true },
+      });
+
+      if (!request) throw new AppError('الطلب غير موجود', 404);
+
+      if (request.type === RequestType.post_listing && role !== Role.admin) {
+        throw new AppError('هذا الطلب مخصص للأدمن فقط', 403);
+      }
+
+      throw new AppError('تم التعامل مع هذا الطلب مسبقاً', 409);
+    }
+
+    return prisma.request.findUnique({
+      where: { id: requestId },
+      include: { assignee: { select: { id: true, name: true, phone: true } } },
+    });
+  },
 }

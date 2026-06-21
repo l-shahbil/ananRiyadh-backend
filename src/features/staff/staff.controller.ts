@@ -20,9 +20,13 @@ export const staffController = {
   },
 
   async updateStaff(req: Request, res: Response) {
-    const data = await staffService.updateStaff(String(req.params.id), req.body);
-    res.json(successResponse(data, 'تم تحديث بيانات الموظف'));
-  },
+  const data = await staffService.updateStaff(
+    String(req.params.id),
+    req.body,
+    req.user!
+  );
+  res.json(successResponse(data, 'تم تحديث بيانات الموظف'));
+},
 
   async suspendStaff(req: Request, res: Response) {
     const data = await staffService.suspendStaff(String(req.params.id));

@@ -2,6 +2,7 @@
   import { AppError } from '../../shared/utils/error.js';
   import { generateSlug } from '../../shared/utils/slug.js';
   import { Facing, ListingCategory, ListingPurpose, ListingStatus, ListingType } from '@prisma/client';
+  import type {createListingInput,updateListingInput} from './listings.validator.js'
 
   // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,34 +18,17 @@
     limit?: number;
   }
 
-  interface CreateListingData {
-    titleAr: string;
-    titleEn: string;
-    descriptionAr?: string;
-    descriptionEn?: string;
-    category: ListingCategory;
-    type: ListingType;
-    purpose: ListingPurpose;
-    price: number;
-    area: number;
-    city: string;
-    district?: string;
-    rooms?: number;
-    livingRooms?: number;
-    bathRooms?: number;
-    facing?: Facing;
-    streetWidth?: number;
-    facing2?: Facing;
-    streetWidth2?: number;
-    facing3?: Facing;
-    streetWidth3?: number;
-    floor?: number;
-    totalFloors?: number;
-    expiresAt?: Date;
-  }
-
-  // Partial of CreateListingData — all fields optional on update
-  type UpdateListingData = Partial<CreateListingData>;
+ 
+interface GetMyListingsParams {
+  category?: ListingCategory | undefined;
+  type?: ListingType | undefined;
+  purpose?: ListingPurpose | undefined;
+  status?: ListingStatus | undefined;
+  city?: string | undefined;
+  district?: string | undefined;
+  page?: number | undefined;
+  limit?: number | undefined;
+}
 
   // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -69,6 +53,8 @@
     completed: [],
     expired:   [],
   };
+
+
 
   // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -242,8 +228,108 @@
   return similar;
 },
 
+async getMyListings(
+  requesterId: string,
+  isAdmin: boolean,
+  ownerIdQuery: string | undefined,
+  params: GetMyListingsParams
+) {
+  // BR: only admin can override ownerId — staff is always forced to their own id
+  const targetOwnerId = isAdmin && ownerIdQuery ? ownerIdQuery : requesterId;
 
-      async createListing(ownerId: string, data: CreateListingData) {
+  const {
+    category,
+    type,
+    purpose,
+    status,
+    city,
+    district,
+    page = 1,
+    limit = 10,
+  } = params;
+
+  const skip = (page - 1) * limit;
+
+  // No default status filter — owner needs to see listings in all states
+  const where = {
+    ownerId: targetOwnerId,
+    ...(category && { category }),
+    ...(type && { type }),
+    ...(purpose && { purpose }),
+    ...(status && { status }),
+    ...(city && { city }),
+    ...(district && { district }),
+  };
+
+  const [listings, total] = await Promise.all([
+    prisma.listing.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+      select: {
+        id: true,
+        slug: true,
+        titleAr: true,
+        titleEn: true,
+        category: true,
+        type: true,
+        purpose: true,
+        price: true,
+        city: true,
+        district: true,
+        area: true,
+        isFeatured: true,
+        status: true,
+        expiresAt: true,
+        createdAt: true,
+        images: {
+          take: 1,
+          orderBy: { sortOrder: 'asc' },
+          select: { url: true },
+        },
+      },
+    }),
+    prisma.listing.count({ where }),
+  ]);
+
+  return {
+    listings,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+},
+
+async getMyStats(requesterId: string, isAdmin: boolean, ownerIdQuery: string | undefined) {
+  const targetOwnerId = isAdmin && ownerIdQuery ? ownerIdQuery : requesterId;
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+  const [active, completed, expiringThisMonth] = await Promise.all([
+    prisma.listing.count({
+      where: { ownerId: targetOwnerId, status: ListingStatus.active },
+    }),
+    prisma.listing.count({
+      where: { ownerId: targetOwnerId, status: ListingStatus.completed },
+    }),
+    prisma.listing.count({
+      where: {
+        ownerId: targetOwnerId,
+        status: ListingStatus.active,
+        expiresAt: { gte: startOfMonth, lte: endOfMonth },
+      },
+    }),
+  ]);
+
+  return { active, completed, expiringThisMonth };
+},
+      async createListing(ownerId: string, data: createListingInput) {
         const slug = await generateSlug(data.titleAr, data.city);
 
         const listing = await prisma.listing.create({
@@ -259,26 +345,70 @@
         return listing;
       },
 
-    async updateListing(id: string, requesterId: string, isAdmin: boolean, data: UpdateListingData) {
-      await resolveListingOrThrow(id, requesterId, isAdmin);
+    async updateListing(
+  id: string,
+  requesterId: string,
+  isAdmin: boolean,
+  data: updateListingInput
+) {
+  await resolveListingOrThrow(id, requesterId, isAdmin);
 
-      // Regenerate slug if Arabic title changed
-      let slug: string | undefined;
-      if (data.titleAr) {
-        const listing = await prisma.listing.findUnique({ where: { id }, select: { city: true } });
-        slug = await generateSlug(data.titleAr, data.city ?? listing!.city);
-      }
+  let slug: string | undefined;
 
-      const updated = await prisma.listing.update({
-        where: { id },
-        data: {
-          ...data,
-          ...(slug && { slug }),
-        },
-      });
+  if (data.titleAr) {
+    const listing = await prisma.listing.findUnique({
+      where: { id },
+      select: { city: true },
+    });
 
-      return updated;
+    slug = await generateSlug(
+      data.titleAr,
+      data.city ?? listing!.city
+    );
+  }
+
+  return prisma.listing.update({
+    where: { id },
+    data: {
+      ...(data.titleAr !== undefined && { titleAr: data.titleAr }),
+      ...(data.titleEn !== undefined && { titleEn: data.titleEn }),
+
+      ...(data.descriptionAr !== undefined && { descriptionAr: data.descriptionAr }),
+      ...(data.descriptionEn !== undefined && { descriptionEn: data.descriptionEn }),
+
+      ...(data.category !== undefined && { category: data.category }),
+      ...(data.type !== undefined && { type: data.type }),
+      ...(data.purpose !== undefined && { purpose: data.purpose }),
+
+      ...(data.price !== undefined && { price: data.price }),
+      ...(data.area !== undefined && { area: data.area }),
+
+      ...(data.city !== undefined && { city: data.city }),
+      ...(data.district !== undefined && { district: data.district }),
+
+      ...(data.rooms !== undefined && { rooms: data.rooms }),
+      ...(data.livingRooms !== undefined && { livingRooms: data.livingRooms }),
+      ...(data.bathRooms !== undefined && { bathRooms: data.bathRooms }),
+
+      ...(data.facing !== undefined && { facing: data.facing }),
+      ...(data.streetWidth !== undefined && { streetWidth: data.streetWidth }),
+
+      ...(data.facing2 !== undefined && { facing2: data.facing2 }),
+      ...(data.streetWidth2 !== undefined && { streetWidth2: data.streetWidth2 }),
+
+      ...(data.facing3 !== undefined && { facing3: data.facing3 }),
+      ...(data.streetWidth3 !== undefined && { streetWidth3: data.streetWidth3 }),
+
+      ...(data.floor !== undefined && { floor: data.floor }),
+      ...(data.totalFloors !== undefined && { totalFloors: data.totalFloors }),
+
+      ...(data.adNumber !== undefined && { adNumber: data.adNumber }),
+      ...(data.expiresAt !== undefined && { expiresAt: data.expiresAt }),
+
+      ...(slug && { slug }),
     },
+  });
+},
 
     async changeStatus(id: string, requesterId: string, isAdmin: boolean, newStatus: ListingStatus) {
       const listing = await resolveListingOrThrow(id, requesterId, isAdmin);

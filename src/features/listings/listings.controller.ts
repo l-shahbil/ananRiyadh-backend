@@ -39,7 +39,41 @@ export const listingsController = {
       next(error);
     }
   },
+async getMyListings(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await listingsService.getMyListings(
+      req.user!.id,
+      req.user!.isAdmin,
+      req.query.ownerId ? String(req.query.ownerId) : undefined,
+      {
+        category: req.query.category as any,
+        type:     req.query.type as any,
+        purpose:  req.query.purpose as any,
+        status:   req.query.status as any,
+        city:     req.query.city ? String(req.query.city) : undefined,
+        district: req.query.district ? String(req.query.district) : undefined,
+        page:     req.query.page  ? Number(req.query.page)  : 1,
+        limit:    req.query.limit ? Number(req.query.limit) : 10,
+      }
+    );
+    res.json(successResponse(result));
+  } catch (error) {
+    next(error);
+  }
+},
 
+async getMyStats(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await listingsService.getMyStats(
+      req.user!.id,
+      req.user!.isAdmin,
+      req.query.ownerId ? String(req.query.ownerId) : undefined
+    );
+    res.json(successResponse(result));
+  } catch (error) {
+    next(error);
+  }
+},
   // ── Write Operations (Day 6) ─────────────────────────────────────────────────
 
   async createListing(req: Request, res: Response, next: NextFunction) {

@@ -9,13 +9,13 @@ const router =Router();
 
 
 // protected routes
+router.use(authenticate)
+router.patch('/:id',authorizeRoles(Role.admin, Role.staff), validate(updateStaffSchema), staffController.updateStaff);
 
-router.use(authenticate,authorizeRoles(Role.admin))
-
+router.use(authorizeRoles(Role.admin))
 router.get('/',          staffController.getStaffList);
 router.get('/:id',       staffController.getStaffById);
 router.post('/',         validate(createStaffSchema), staffController.createStaff);
-router.patch('/:id',     validate(updateStaffSchema), staffController.updateStaff);
 router.patch('/:id/suspend',    staffController.suspendStaff);
 router.patch('/:id/reactivate', staffController.reactivateStaff);
 router.delete('/:id',    staffController.deleteStaff);

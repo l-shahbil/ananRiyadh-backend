@@ -97,7 +97,16 @@ if (exists?.phone === input.phone) throw new AppError('رقم الجوال مس�
     });
   },
 
- async updateStaff(staffId: string, input: UpdateStaffInput) {
+async updateStaff(
+  staffId: string,
+  input: UpdateStaffInput,
+  requestingUser: { id: string; role: Role }
+) {
+  // فحص الملكية: الموظف يعدّل سجله فقط — الأدمن بلا قيود
+  if (requestingUser.role === Role.staff && requestingUser.id !== staffId) {
+    throw new AppError('لا يمكنك تعديل بيانات موظف آخر', 403);
+  }
+
   const staff = await prisma.user.findUnique({ where: { id: staffId, role: Role.staff } });
   if (!staff) throw new AppError('الموظف غير موجود', 404);
 

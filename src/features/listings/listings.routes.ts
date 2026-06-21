@@ -11,6 +11,9 @@ import {
 } from './listings.validator.js';
 
 const router = Router();
+// ── My listings (staff + admin) — MUST be registered before '/:slug' ─────────
+router.get('/my',       authenticate, authorizeRoles('staff', 'admin'), listingsController.getMyListings);
+router.get('/my/stats', authenticate, authorizeRoles('staff', 'admin'), listingsController.getMyStats);
 
 // ── Public routes — no auth required ─────────────────────────────────────────
 router.get('/',              listingsController.getListings);
