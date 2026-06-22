@@ -57,6 +57,8 @@ export const authService = {
         name: true,
         email: true,
         phone: true,
+        whatsappNumber:true,
+        telegramChatId:true,
         role: true,
         status: true,
         createAt: true,
