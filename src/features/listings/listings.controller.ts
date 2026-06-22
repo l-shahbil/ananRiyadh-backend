@@ -5,7 +5,7 @@ import { ListingStatus } from '@prisma/client';
 
 export const listingsController = {
 
-  // ── Read Operations (Day 5) ──────────────────────────────────────────────────
+  // ── Read Operations ──────────────────────────────────────────────────────────
 
   async getListings(req: Request, res: Response, next: NextFunction) {
     try {
@@ -39,42 +39,44 @@ export const listingsController = {
       next(error);
     }
   },
-async getMyListings(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await listingsService.getMyListings(
-      req.user!.id,
-      req.user!.isAdmin,
-      req.query.ownerId ? String(req.query.ownerId) : undefined,
-      {
-        category: req.query.category as any,
-        type:     req.query.type as any,
-        purpose:  req.query.purpose as any,
-        status:   req.query.status as any,
-        city:     req.query.city ? String(req.query.city) : undefined,
-        district: req.query.district ? String(req.query.district) : undefined,
-        page:     req.query.page  ? Number(req.query.page)  : 1,
-        limit:    req.query.limit ? Number(req.query.limit) : 10,
-      }
-    );
-    res.json(successResponse(result));
-  } catch (error) {
-    next(error);
-  }
-},
 
-async getMyStats(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await listingsService.getMyStats(
-      req.user!.id,
-      req.user!.isAdmin,
-      req.query.ownerId ? String(req.query.ownerId) : undefined
-    );
-    res.json(successResponse(result));
-  } catch (error) {
-    next(error);
-  }
-},
-  // ── Write Operations (Day 6) ─────────────────────────────────────────────────
+  async getMyListings(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await listingsService.getMyListings(
+        req.user!.id,
+        req.user!.isAdmin,
+        req.query.ownerId ? String(req.query.ownerId) : undefined,
+        {
+          category:   req.query.category   as any,
+          type:       req.query.type       as any,
+          purpose:    req.query.purpose    as any,
+          status:     req.query.status     as any,
+          cityId:     req.query.cityId     ? String(req.query.cityId)     : undefined,
+          districtId: req.query.districtId ? String(req.query.districtId) : undefined,
+          page:       req.query.page  ? Number(req.query.page)  : 1,
+          limit:      req.query.limit ? Number(req.query.limit) : 10,
+        }
+      );
+      res.json(successResponse(result));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getMyStats(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await listingsService.getMyStats(
+        req.user!.id,
+        req.user!.isAdmin,
+        req.query.ownerId ? String(req.query.ownerId) : undefined
+      );
+      res.json(successResponse(result));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // ── Write Operations ─────────────────────────────────────────────────────────
 
   async createListing(req: Request, res: Response, next: NextFunction) {
     try {
@@ -129,11 +131,11 @@ async getMyStats(req: Request, res: Response, next: NextFunction) {
   // ── Admin-only Operations ────────────────────────────────────────────────────
 
   async toggleFeatured(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await listingsService.toggleFeatured(String(req.params.id));
-    res.json(successResponse(result));
-  } catch (error) {
-    next(error);
-  }
-},
+    try {
+      const result = await listingsService.toggleFeatured(String(req.params.id));
+      res.json(successResponse(result));
+    } catch (error) {
+      next(error);
+    }
+  },
 };

@@ -16,9 +16,6 @@ model Listing {
     price Float
     area  Float
 
-    city     String
-    district String?
-
     rooms       Int?
     livingRooms Int?
     bathRooms   Int?
@@ -38,6 +35,11 @@ model Listing {
     status     ListingStatus @default(active)
     isFeatured Boolean       @default(false)
 
+    cityId     String
+    districtId String
+
+
+
     expiresAt DateTime?
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
@@ -46,16 +48,19 @@ model Listing {
 
     owner  User           @relation("ListingOwner", fields: [ownerId], references: [id])
     images ListingImage[]
+    district   District @relation(fields: [districtId], references: [id], onDelete: Restrict)
+    city       City     @relation(fields: [cityId], references: [id], onDelete: Restrict)
+
 
     @@index([ownerId])
     @@index([slug])
     @@index([status])
-    @@index([city])
     @@index([category])
     @@index([type])
     @@index([purpose])
     @@index([isFeatured])
+    @@index([cityId, districtId])
     @@index([expiresAt])
     @@index([createdAt])
-    @@index([status, city, category, purpose])
+    @@index([status, cityId, category, purpose])
 }

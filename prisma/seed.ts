@@ -5,6 +5,51 @@ const prisma = new PrismaClient()
 
 async function main() {
 
+  // ===== Cities =====
+  const riyadh = await prisma.city.upsert({
+    where: { id: 'city_riyadh' },
+    update: {},
+    create: {
+      id: 'city_riyadh',
+      nameAr: 'الرياض',
+      nameEn: 'Riyadh',
+    }
+  })
+
+  // ===== Districts =====
+  const distNarjes = await prisma.district.upsert({
+    where: { id: 'dist_narjes' },
+    update: {},
+    create: {
+      id: 'dist_narjes',
+      nameAr: 'حي النرجس',
+      nameEn: 'Al Narjes',
+      cityId: riyadh.id,
+    }
+  })
+
+  const distYasmin = await prisma.district.upsert({
+    where: { id: 'dist_yasmin' },
+    update: {},
+    create: {
+      id: 'dist_yasmin',
+      nameAr: 'حي الياسمين',
+      nameEn: 'Al Yasmin',
+      cityId: riyadh.id,
+    }
+  })
+
+  const distOlaya = await prisma.district.upsert({
+    where: { id: 'dist_olaya' },
+    update: {},
+    create: {
+      id: 'dist_olaya',
+      nameAr: 'حي العليا',
+      nameEn: 'Al Olaya',
+      cityId: riyadh.id,
+    }
+  })
+
   // ===== Admin =====
   const adminPassword = await bcrypt.hash('admin123456', 10)
   const admin = await prisma.user.upsert({
@@ -47,8 +92,8 @@ async function main() {
         purpose: ListingPurpose.sale,
         price: 850000,
         area: 180,
-        city: 'الرياض',
-        district: 'حي النرجس',
+        cityId: riyadh.id,
+        districtId: distNarjes.id,
         rooms: 4,
         bathRooms: 3,
         status: ListingStatus.active,
@@ -63,8 +108,8 @@ async function main() {
         purpose: ListingPurpose.rent,
         price: 120000,
         area: 400,
-        city: 'الرياض',
-        district: 'حي الياسمين',
+        cityId: riyadh.id,
+        districtId: distYasmin.id,
         rooms: 6,
         bathRooms: 4,
         status: ListingStatus.active,
@@ -80,36 +125,39 @@ async function main() {
         purpose: ListingPurpose.rent,
         price: 80000,
         area: 220,
-        city: 'الرياض',
-        district: 'حي العليا',
+        cityId: riyadh.id,
+        districtId: distOlaya.id,
         status: ListingStatus.active,
       },
     ]
   })
 
   // ===== Settings =====
-await prisma.settings.upsert({
-  where: { id: 'default' },
-  update: {},
-  create: {
-    id: 'default',
-    nameAr: 'عنان الرياض للعقارات',
-    nameEn: 'Anan Riyadh Real Estate',
-    phone: '',
-    whatsapp: '',
-    email: '',
-    address: '',
-    descriptionAr: '',
-    descriptionEn: '',
-    instagram: '',
-    twitter: '',
-  },
-})
+  await prisma.settings.upsert({
+    where: { id: 'default' },
+    update: {},
+    create: {
+      id: 'default',
+      nameAr: 'عنان الرياض للعقارات',
+      nameEn: 'Anan Riyadh Real Estate',
+      phone: '',
+      whatsapp: '',
+      email: '',
+      addressAr: '',
+      addressEn: '',
+      descriptionAr: '',
+      descriptionEn: '',
+      instagram: '',
+      tiktok: '',
+      snapshat: '',
+    },
+  })
 
-console.log('✅ Seed completed')
-console.log('👤 Admin:', admin.email, '| Password: admin123456')
-console.log('👤 Staff:', staff.email, '| Password: staff123456')
-console.log('⚙️ Settings: initialized')
+  console.log('✅ Seed completed')
+  console.log('👤 Admin:', admin.email, '| Password: admin123456')
+  console.log('👤 Staff:', staff.email, '| Password: staff123456')
+  console.log('🏙️ City: الرياض | Districts: النرجس، الياسمين، العليا')
+  console.log('⚙️ Settings: initialized')
 }
 
 main()

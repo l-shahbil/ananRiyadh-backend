@@ -1,0 +1,11 @@
+model District {
+  id        String   @id @default(cuid())
+  nameAr    String
+  nameEn    String?
+  cityId    String
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  listings  Listing[]
+
+  @@index([cityId])
+  @@map("districts")
+}

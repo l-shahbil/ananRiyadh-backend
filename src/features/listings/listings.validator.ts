@@ -1,30 +1,29 @@
 import { z } from 'zod';
-import {ListingCategory,ListingType,ListingPurpose,Facing,ListingStatus} from '@prisma/client'
+import { ListingCategory, ListingType, ListingPurpose, Facing, ListingStatus } from '@prisma/client'
 
-
-const facingField    = z.enum(Facing).optional().transform(v => v ?? null);
-const streetField    = z.number().min(0).optional().transform(v => v ?? null);
-const intField       = z.number().int().min(0).optional().transform(v => v ?? null);
+const facingField = z.enum(Facing).optional().transform(v => v ?? null);
+const streetField = z.number().min(0).optional().transform(v => v ?? null);
+const intField    = z.number().int().min(0).optional().transform(v => v ?? null);
 
 // ─── Create Listing ───────────────────────────────────────────────────────────
 
 export const validateCreateListing = z.object({
   body: z.object({
     titleAr: z.string().trim().min(1, "العنوان بالعربي مطلوب").max(200, "العنوان طويل جداً"),
-    titleEn: z.string({error:"العنوان بالانجليزي مطلوب"}).trim().min(1, "العنوان بالانجليزي مطلوب").max(200, "العنوان الإنجليزي طويل جداً"),
+    titleEn: z.string({ error: "العنوان بالانجليزي مطلوب" }).trim().min(1, "العنوان بالانجليزي مطلوب").max(200, "العنوان الإنجليزي طويل جداً"),
 
-    descriptionAr: z.string().trim().max(5000, "الوصف العربي طويل جداً").optional().transform(v => v ?? null),
-    descriptionEn: z.string().trim().max(5000, "الوصف الإنجليزي طويل جداً").optional().transform(v => v ?? null),
+    descriptionAr: z.string().trim().max(5000).optional().transform(v => v ?? null),
+    descriptionEn: z.string().trim().max(5000).optional().transform(v => v ?? null),
 
     category: z.enum(ListingCategory, { error: "التصنيف مطلوب أو غير صحيح" }),
-    type:     z.enum(ListingType,       { error: "النوع مطلوب أو غير صحيح" }),
-    purpose:  z.enum(ListingPurpose,    { error: "الغرض مطلوب أو غير صحيح" }),
+    type:     z.enum(ListingType,     { error: "النوع مطلوب أو غير صحيح" }),
+    purpose:  z.enum(ListingPurpose,  { error: "الغرض مطلوب أو غير صحيح" }),
 
     price: z.number({ error: "السعر مطلوب ويجب أن يكون رقماً" }).min(0),
     area:  z.number({ error: "المساحة مطلوبة ويجب أن تكون رقماً" }).min(0),
 
-    city: z.string({ error: "المدينة مطلوبة" }).trim().min(1, "المدينة مطلوبة").max(100, "اسم المدينة طويل جداً"),
-    district: z.string().trim().max(100, "اسم الحي طويل جداً").optional().transform(v => v ?? null),
+    cityId:     z.string({ error: "المدينة مطلوبة" }).min(1, "المدينة مطلوبة"),
+    districtId: z.string({ error: "الحي مطلوب" }).min(1, "الحي مطلوب"),
 
     rooms:       intField,
     livingRooms: intField,
@@ -33,16 +32,15 @@ export const validateCreateListing = z.object({
     facing:      facingField,
     streetWidth: streetField,
 
-    // Corner-only fields — business rule BR-009
     facing2:      facingField,
     streetWidth2: streetField,
     facing3:      facingField,
     streetWidth3: streetField,
 
     floor:       z.number().int().optional().transform(v => v ?? null),
-    totalFloors: z.number().int().min(1, "عدد الأدوار يجب أن يكون أكبر من صفر").optional().transform(v => v ?? null),
+    totalFloors: z.number().int().min(1).optional().transform(v => v ?? null),
 
-    AdNumber:z.number().int().optional().transform(v=> v?? null),
+    AdNumber:  z.number().int().optional().transform(v => v ?? null),
     expiresAt: z.coerce.date({ error: "تاريخ الانتهاء غير صحيح" }).optional().transform(v => v ?? null),
   }),
   params: z.object({}),
@@ -53,11 +51,11 @@ export const validateCreateListing = z.object({
 
 export const validateUpdateListing = z.object({
   body: z.object({
-    titleAr: z.string().trim().min(1, "العنوان لا يمكن أن يكون فارغاً").max(200).optional(),
+    titleAr: z.string().trim().min(1).max(200).optional(),
     titleEn: z.string().trim().max(200).optional(),
 
-    descriptionAr: z.string().trim().max(5000).optional(),
-    descriptionEn: z.string().trim().max(5000).optional(),
+    descriptionAr: z.string().trim().max(5000).nullable().optional(),
+    descriptionEn: z.string().trim().max(5000).nullable().optional(),
 
     category: z.enum(ListingCategory).optional(),
     type:     z.enum(ListingType).optional(),
@@ -66,8 +64,8 @@ export const validateUpdateListing = z.object({
     price: z.number().min(0).optional(),
     area:  z.number().min(0).optional(),
 
-    city:     z.string().trim().min(1, "المدينة لا يمكن أن تكون فارغة").max(100).optional(),
-    district: z.string().trim().max(100).nullable().optional(),
+    cityId:     z.string().min(1).optional(),
+    districtId: z.string().min(1).optional(),
 
     rooms:       z.number().int().min(0).nullable().optional(),
     livingRooms: z.number().int().min(0).nullable().optional(),
@@ -84,7 +82,7 @@ export const validateUpdateListing = z.object({
     floor:       z.number().int().nullable().optional(),
     totalFloors: z.number().int().min(1).nullable().optional(),
 
-    AdNumber:       z.number().int().nullable().optional(),
+    AdNumber:  z.number().int().nullable().optional(),
     expiresAt: z.coerce.date().nullable().optional(),
   }),
   params: z.object({
@@ -97,7 +95,7 @@ export const validateUpdateListing = z.object({
 
 export const validateChangeStatus = z.object({
   body: z.object({
-    status: z.enum(ListingStatus, { error: "الحالة غير صحيحة — المسموح: active, hidden, completed" }),
+    status: z.enum(ListingStatus, { error: "الحالة غير صحيحة" }),
   }),
   params: z.object({
     id: z.string().min(1, "معرف الإعلان مطلوب"),

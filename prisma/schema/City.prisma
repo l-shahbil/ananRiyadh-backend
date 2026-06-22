@@ -1,0 +1,9 @@
+model City{
+    id  String      @id     @default(cuid())
+    nameAr  String
+    nameEn  String
+    districts   District[]
+    listings   Listing[]
+
+    @@map("cities")
+}
