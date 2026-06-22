@@ -117,28 +117,30 @@ export const listingsService = {
     };
   },
 
-  async getListingBySlug(slug: string) {
-    const listing = await prisma.listing.findUnique({
-      where: { slug },
-      include: {
-        images: {
-          orderBy: { sortOrder: 'asc' },
-          select: { id: true, url: true, sortOrder: true },
-        },
-        owner: {
-          select: { name: true, phone: true, whatsappNumber: true },
-        },
-        city:     { select: { id: true, nameAr: true, nameEn: true } },
-        district: { select: { id: true, nameAr: true, nameEn: true } },
+ async getListingBySlug(slug: string, role?: string) {
+  const listing = await prisma.listing.findUnique({
+    where: { slug },
+    include: {
+      images: {
+        orderBy: { sortOrder: 'asc' },
+        select: { id: true, url: true, sortOrder: true },
       },
-    });
+      owner: {
+        select: { name: true, phone: true, whatsappNumber: true },
+      },
+      city:     { select: { id: true, nameAr: true, nameEn: true } },
+      district: { select: { id: true, nameAr: true, nameEn: true } },
+    },
+  });
 
-    if (!listing || listing.status !== ListingStatus.active) {
-      throw new AppError('الإعلان غير موجود', 404);
-    }
+  const isStaff = role === 'admin' || role === 'staff';
 
-    return listing;
-  },
+  if (!listing || (!isStaff && listing.status !== ListingStatus.active)) {
+    throw new AppError('الإعلان غير موجود', 404);
+  }
+
+  return listing;
+},
 
   async getSimilarListings(slug: string) {
     const listing = await prisma.listing.findUnique({

@@ -22,14 +22,17 @@ export const listingsController = {
     }
   },
 
-  async getListingBySlug(req: Request, res: Response, next: NextFunction) {
-    try {
-      const listing = await listingsService.getListingBySlug(String(req.params.slug));
-      res.json(successResponse(listing));
-    } catch (error) {
-      next(error);
-    }
-  },
+ async getListingBySlug(req: Request, res: Response, next: NextFunction) {
+  try {
+    const listing = await listingsService.getListingBySlug(
+      String(req.params.slug),
+      req.user?.role
+    );
+    res.json(successResponse(listing));
+  } catch (error) {
+    next(error);
+  }
+},
 
   async getSimilarListings(req: Request, res: Response, next: NextFunction) {
     try {
