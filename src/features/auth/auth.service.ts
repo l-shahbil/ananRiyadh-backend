@@ -55,6 +55,7 @@ export const authService = {
       select: {
         id: true,
         name: true,
+        nameEn:true,
         email: true,
         phone: true,
         whatsappNumber:true,

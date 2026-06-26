@@ -166,7 +166,7 @@ export const listingsService = {
           select:  { id: true, url: true, sortOrder: true },
         },
         owner: {
-          select: { name: true, phone: true, whatsappNumber: true },
+          select: { name: true,nameEn:true, phone: true, whatsappNumber: true },
         },
         city:     { select: { id: true, nameAr: true, nameEn: true } },
         district: { select: { id: true, nameAr: true, nameEn: true } },
