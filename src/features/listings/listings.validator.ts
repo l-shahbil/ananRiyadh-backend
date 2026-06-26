@@ -1,9 +1,10 @@
 import { z } from 'zod';
-import { ListingCategory, ListingType, ListingPurpose, Facing, ListingStatus } from '@prisma/client'
+import { ListingCategory, ListingType, ListingPurpose, Facing, ListingStatus, FacingType } from '@prisma/client'
 
-const facingField = z.enum(Facing).optional().transform(v => v ?? null);
-const streetField = z.number().min(0).optional().transform(v => v ?? null);
-const intField    = z.number().int().min(0).optional().transform(v => v ?? null);
+const facingField     = z.enum(Facing).optional().transform(v => v ?? null);
+const facingTypeField = z.enum(FacingType).optional().transform(v => v ?? null);
+const streetField     = z.number().min(0).optional().transform(v => v ?? null);
+const intField        = z.number().int().min(0).optional().transform(v => v ?? null);
 
 // ─── Create Listing ───────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ export const validateCreateListing = z.object({
     livingRooms: intField,
     bathRooms:   intField,
 
+    facingType:  facingTypeField,
     facing:      facingField,
     streetWidth: streetField,
 
@@ -71,6 +73,7 @@ export const validateUpdateListing = z.object({
     livingRooms: z.number().int().min(0).nullable().optional(),
     bathRooms:   z.number().int().min(0).nullable().optional(),
 
+    facingType:  z.enum(FacingType).nullable().optional(),
     facing:      z.enum(Facing).nullable().optional(),
     streetWidth: z.number().min(0).nullable().optional(),
 

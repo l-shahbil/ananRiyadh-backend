@@ -20,6 +20,8 @@ model Listing {
     livingRooms Int?
     bathRooms   Int?
 
+    facingType  FacingType?
+
     facing      Facing?
     streetWidth Float?
 

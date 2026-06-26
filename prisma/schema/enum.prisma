@@ -49,14 +49,17 @@ enum ListingStatus {
   completed
   expired
 }
-
+enum FacingType {
+  single  
+  corner      
+  three_sides 
+  }
+  
 enum Facing {
   north
   south
   east
   west
-  corner
-  three_sides
 }
 
 enum RequestType {

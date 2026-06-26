@@ -31,6 +31,7 @@ export const settingsService = {
       ...(data.instagram !== undefined && { instagram: data.instagram }),
       ...(data.tiktok !== undefined && { tiktok: data.tiktok }),
       ...(data.snapshat !== undefined && { snapshat: data.snapshat }),
+      ...(data.X !== undefined && { X: data.X }),
     },
   });
 },

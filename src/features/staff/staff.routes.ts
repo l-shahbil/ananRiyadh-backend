@@ -10,8 +10,8 @@ const router =Router();
 
 // protected routes
 router.use(authenticate)
-router.patch('/:id',authorizeRoles(Role.admin, Role.staff), validate(updateStaffSchema), staffController.updateStaff);
 
+router.patch('/:id',authorizeRoles(Role.admin, Role.staff), validate(updateStaffSchema), staffController.updateStaff);
 router.use(authorizeRoles(Role.admin))
 router.get('/',          staffController.getStaffList);
 router.get('/:id',       staffController.getStaffById);

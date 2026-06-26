@@ -1,4 +1,4 @@
-import { PrismaClient, Role, ListingCategory, ListingType, ListingPurpose, ListingStatus } from '@prisma/client'
+import { PrismaClient, Role, ListingCategory, ListingType, ListingPurpose, ListingStatus, FacingType, Facing } from '@prisma/client'
 import bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
@@ -83,6 +83,7 @@ async function main() {
     skipDuplicates: true,
     data: [
       {
+        // واجهة واحدة — شمال
         ownerId: staff.id,
         slug: 'شقة-الرياض-حي-النرجس-1',
         titleAr: 'شقة للبيع في حي النرجس',
@@ -97,8 +98,12 @@ async function main() {
         rooms: 4,
         bathRooms: 3,
         status: ListingStatus.active,
+        facingType: FacingType.single,
+        facing: Facing.north,
+        streetWidth: 15,
       },
       {
+        // كورنر — شمال + شرق
         ownerId: staff.id,
         slug: 'فيلا-الرياض-حي-الياسمين-1',
         titleAr: 'فيلا للإيجار في حي الياسمين',
@@ -114,8 +119,14 @@ async function main() {
         bathRooms: 4,
         status: ListingStatus.active,
         isFeatured: true,
+        facingType: FacingType.corner,
+        facing: Facing.north,
+        streetWidth: 20,
+        facing2: Facing.east,
+        streetWidth2: 15,
       },
       {
+        // ثلاثة شوارع — شمال + شرق + غرب
         ownerId: admin.id,
         slug: 'مكتب-الرياض-حي-العليا-1',
         titleAr: 'مكتب تجاري في العليا',
@@ -128,6 +139,13 @@ async function main() {
         cityId: riyadh.id,
         districtId: distOlaya.id,
         status: ListingStatus.active,
+        facingType: FacingType.three_sides,
+        facing: Facing.north,
+        streetWidth: 20,
+        facing2: Facing.east,
+        streetWidth2: 15,
+        facing3: Facing.west,
+        streetWidth3: 12,
       },
     ]
   })

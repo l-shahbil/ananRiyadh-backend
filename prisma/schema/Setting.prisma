@@ -12,4 +12,6 @@ model Settings {
   instagram     String @default("")
   tiktok       String @default("")
   snapshat       String @default("")
+  X              String @default("")
+
 }

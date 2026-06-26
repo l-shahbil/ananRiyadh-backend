@@ -15,6 +15,8 @@ export const updateSettingsSchema = z.object({
     instagram:     z.string().optional(),
     tiktok:        z.string().optional(),
     snapshat:      z.string().optional(),
+    X:      z.string().optional(),
+
   }),
 });
 
