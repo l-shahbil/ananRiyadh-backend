@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { listingsController } from './listings.controller.js';
 import { mediaController } from '../media/media.controller.js';
-import { authenticate, authorizeRoles } from '../../shared/middleware/Auth.middleware.js';
+import { authenticate, authorizeRoles, optionalAuthenticate } from '../../shared/middleware/Auth.middleware.js';
 import { validate } from '../../shared/middleware/Validate.middleware.js';
 import {
   validateCreateListing,
@@ -11,13 +11,14 @@ import {
 } from './listings.validator.js';
 
 const router = Router();
+
 // ── My listings (staff + admin) — MUST be registered before '/:slug' ─────────
 router.get('/my',       authenticate, authorizeRoles('staff', 'admin'), listingsController.getMyListings);
 router.get('/my/stats', authenticate, authorizeRoles('staff', 'admin'), listingsController.getMyStats);
 
-// ── Public routes — no auth required ─────────────────────────────────────────
+// ── Public routes ─────────────────────────────────────────────────────────────
 router.get('/',              listingsController.getListings);
-router.get('/:slug',         listingsController.getListingBySlug);
+router.get('/:slug',         optionalAuthenticate, listingsController.getListingBySlug);
 router.get('/:slug/similar', listingsController.getSimilarListings);
 
 // ── Protected routes — staff + admin ─────────────────────────────────────────

@@ -15,7 +15,7 @@ export const authenticate = async (req: Request, _res: Response, next: NextFunct
     const token = authHeader.split(' ')[1];
     if (!token) return next(new UnauthorizedError('لم يتم تقديم رمز المصادقة'));
 
-    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as unknown as JwtPayload;
 
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
@@ -45,4 +45,35 @@ export const authorizeRoles = (...roles: string[]) => {
     }
     next();
   };
+};
+
+export const optionalAuthenticate = async (req: Request, _res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith('Bearer ')) return next();
+
+  try {
+    const token = authHeader.split(' ')[1];
+    if (!token) return next();
+
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as unknown as JwtPayload;
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, role: true, name: true, status: true },
+    });
+
+    if (user && user.status !== 'suspended') {
+      req.user = {
+        id: user.id,
+        role: user.role,
+        name: user.name,
+        isAdmin: user.role === 'admin',
+      };
+    }
+  } catch {
+    // invalid token → treat as guest
+  }
+
+  next();
 };
