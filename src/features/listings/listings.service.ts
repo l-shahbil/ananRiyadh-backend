@@ -6,16 +6,25 @@ import type { createListingInput, updateListingInput } from './listings.validato
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type GetListingsSortBy = 'featured' | 'newest' | 'oldest' | 'price_desc' | 'price_asc';
+
 interface GetListingsParams {
-  category?:   ListingCategory;
-  type?:       ListingType;
-  purpose?:    ListingPurpose;
-  cityId?:     string;
-  districtId?: string;
-  minPrice?:   number;
-  maxPrice?:   number;
-  page?:       number;
-  limit?:      number;
+  category?:     ListingCategory  | undefined;
+  type?:         ListingType      | undefined;
+  purpose?:      ListingPurpose   | undefined;
+  cityId?:       string           | undefined;
+  districtId?:   string           | undefined;
+  minPrice?:     number           | undefined;
+  maxPrice?:     number           | undefined;
+  minArea?:      number           | undefined;
+  maxArea?:      number           | undefined;
+  minRooms?:     number           | undefined;
+  maxRooms?:     number           | undefined;
+  minBathrooms?: number           | undefined;
+  maxBathrooms?: number           | undefined;
+  sortBy?:       GetListingsSortBy | undefined;
+  page?:         number           | undefined;
+  limit?:        number           | undefined;
 }
 
 interface GetMyListingsParams {
@@ -70,6 +79,14 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   expired:   [],
 };
 
+const SORT_ORDER: Record<GetListingsSortBy, Prisma.ListingOrderByWithRelationInput[]> = {
+  newest:     [{ createdAt: 'desc' }],
+  oldest:     [{ createdAt: 'asc'  }],
+  price_desc: [{ price: 'desc' }],
+  price_asc:  [{ price: 'asc'  }],
+  featured:   [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+};
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const listingsService = {
@@ -81,6 +98,10 @@ export const listingsService = {
       category, type, purpose,
       cityId, districtId,
       minPrice, maxPrice,
+      minArea, maxArea,
+      minRooms, maxRooms,
+      minBathrooms, maxBathrooms,
+      sortBy = 'featured',
       page = 1, limit = 12,
     } = params;
 
@@ -99,15 +120,33 @@ export const listingsService = {
             ...(maxPrice !== undefined && { lte: maxPrice }),
           }}
         : {}),
+      ...(minArea !== undefined || maxArea !== undefined
+        ? { area: {
+            ...(minArea !== undefined && { gte: minArea }),
+            ...(maxArea !== undefined && { lte: maxArea }),
+          }}
+        : {}),
+      ...(minRooms !== undefined || maxRooms !== undefined
+        ? { rooms: {
+            ...(minRooms !== undefined && { gte: minRooms }),
+            ...(maxRooms !== undefined && { lte: maxRooms }),
+          }}
+        : {}),
+      ...(minBathrooms !== undefined || maxBathrooms !== undefined
+        ? { bathRooms: {
+            ...(minBathrooms !== undefined && { gte: minBathrooms }),
+            ...(maxBathrooms !== undefined && { lte: maxBathrooms }),
+          }}
+        : {}),
     };
 
     const [listings, total] = await Promise.all([
       prisma.listing.findMany({
         where,
         skip,
-        take: limit,
-        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-        select: listingCardSelect,
+        take:    limit,
+        orderBy: SORT_ORDER[sortBy] ?? SORT_ORDER.featured,
+        select:  listingCardSelect,
       }),
       prisma.listing.count({ where }),
     ]);

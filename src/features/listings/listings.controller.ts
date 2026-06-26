@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import { listingsService } from './listings.service.js';
 import { successResponse } from '../../shared/utils/response.js';
-import { ListingStatus } from '@prisma/client';
+import { ListingCategory, ListingPurpose, ListingStatus, ListingType } from '@prisma/client';
+import type { GetListingsSortBy } from './listings.service.js';
 
 export const listingsController = {
 
@@ -9,30 +10,44 @@ export const listingsController = {
 
   async getListings(req: Request, res: Response, next: NextFunction) {
     try {
+      const q = req.query;
+
       const result = await listingsService.getListings({
-        ...req.query,
-        page:     req.query.page     ? Number(req.query.page)     : 1,
-        limit:    req.query.limit    ? Number(req.query.limit)    : 12,
-        minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
-        maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
-      } as any);
+        category:     q.category     as ListingCategory  | undefined,
+        type:         q.type         as ListingType      | undefined,
+        purpose:      q.purpose      as ListingPurpose   | undefined,
+        cityId:       q.cityId       ? String(q.cityId)       : undefined,
+        districtId:   q.districtId   ? String(q.districtId)   : undefined,
+        sortBy:       q.sortBy       as GetListingsSortBy | undefined,
+        minPrice:     q.minPrice     ? Number(q.minPrice)     : undefined,
+        maxPrice:     q.maxPrice     ? Number(q.maxPrice)     : undefined,
+        minArea:      q.minArea      ? Number(q.minArea)      : undefined,
+        maxArea:      q.maxArea      ? Number(q.maxArea)      : undefined,
+        minRooms:     q.minRooms     ? Number(q.minRooms)     : undefined,
+        maxRooms:     q.maxRooms     ? Number(q.maxRooms)     : undefined,
+        minBathrooms: q.minBathrooms ? Number(q.minBathrooms) : undefined,
+        maxBathrooms: q.maxBathrooms ? Number(q.maxBathrooms) : undefined,
+        page:         q.page         ? Number(q.page)         : 1,
+        limit:        q.limit        ? Number(q.limit)        : 12,
+      });
+
       res.json(successResponse(result));
     } catch (error) {
       next(error);
     }
   },
 
- async getListingBySlug(req: Request, res: Response, next: NextFunction) {
-  try {
-    const listing = await listingsService.getListingBySlug(
-      String(req.params.slug),
-      req.user?.role
-    );
-    res.json(successResponse(listing));
-  } catch (error) {
-    next(error);
-  }
-},
+  async getListingBySlug(req: Request, res: Response, next: NextFunction) {
+    try {
+      const listing = await listingsService.getListingBySlug(
+        String(req.params.slug),
+        req.user?.role
+      );
+      res.json(successResponse(listing));
+    } catch (error) {
+      next(error);
+    }
+  },
 
   async getSimilarListings(req: Request, res: Response, next: NextFunction) {
     try {
@@ -50,14 +65,14 @@ export const listingsController = {
         req.user!.isAdmin,
         req.query.ownerId ? String(req.query.ownerId) : undefined,
         {
-          category:   req.query.category   as any,
-          type:       req.query.type       as any,
-          purpose:    req.query.purpose    as any,
-          status:     req.query.status     as any,
+          category:   req.query.category   as ListingCategory | undefined,
+          type:       req.query.type       as ListingType     | undefined,
+          purpose:    req.query.purpose    as ListingPurpose  | undefined,
+          status:     req.query.status     as ListingStatus   | undefined,
           cityId:     req.query.cityId     ? String(req.query.cityId)     : undefined,
           districtId: req.query.districtId ? String(req.query.districtId) : undefined,
-          page:       req.query.page  ? Number(req.query.page)  : 1,
-          limit:      req.query.limit ? Number(req.query.limit) : 10,
+          page:       req.query.page       ? Number(req.query.page)       : 1,
+          limit:      req.query.limit      ? Number(req.query.limit)      : 10,
         }
       );
       res.json(successResponse(result));
