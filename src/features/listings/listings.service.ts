@@ -74,8 +74,8 @@ async function resolveListingOrThrow(id: string, requesterId: string, isAdmin: b
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   active:    ['hidden', 'completed'],
-  hidden:    ['active'],
-  completed: [],
+  hidden:    ['active', 'completed'],
+  completed: ['active','hidden'],
   expired:   [],
 };
 
