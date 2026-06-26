@@ -2,8 +2,9 @@ import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../utils/error.js';
 import type { JwtPayload } from '../types/jwt.types.js';
+import { prisma } from '../../shared/config/prisma.js';
 
-export const authenticate = (req: Request, _res: Response, next: NextFunction) => {
+export const authenticate = async (req: Request, _res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -16,11 +17,19 @@ export const authenticate = (req: Request, _res: Response, next: NextFunction) =
 
     const payload = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
 
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, role: true, name: true, status: true },
+    });
+
+    if (!user) return next(new UnauthorizedError('المستخدم غير موجود'));
+    if (user.status === 'suspended') return next(new UnauthorizedError('الحساب موقوف'));
+
     req.user = {
-      id: payload.userId,
-      role: payload.role,
-      name: payload.name,
-      isAdmin: payload.role === 'admin',
+      id: user.id,
+      role: user.role,
+      name: user.name,
+      isAdmin: user.role === 'admin',
     };
 
     next();

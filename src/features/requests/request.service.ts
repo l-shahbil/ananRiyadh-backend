@@ -55,7 +55,6 @@ export const requestService = {
     const postListingPending =
       pendingCounts.find((c) => c.type === RequestType.post_listing)?._count._all ?? 0;
 
-    console.log(requests)
     return {
       requests,
       stats: { findPropertyPending, postListingPending },
