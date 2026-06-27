@@ -1,9 +1,20 @@
 import { prisma } from '../../shared/config/prisma.js';
-import { Role, RequestType, RequestStatus } from "@prisma/client"
+import { Role, RequestType, RequestStatus,ListingCategory,ListingType } from "@prisma/client"
 import { AppError } from '../../shared/utils/error.js';
 import type { CreateRequestInput } from './requests.validator.js';
 import { sendRequestNotification } from '../../shared/utils/telegram.js';
 
+interface GetRequestsParams {
+  role:          Role;
+  userId:        string;
+  page:          number;
+  limit:         number;
+  type?:         RequestType | undefined;
+  category?:     ListingCategory | undefined;
+  propertyType?: ListingType | undefined;
+  status?:       RequestStatus | undefined;
+  assignedToMe?: boolean | undefined;
+}
 
 export const requestService = {
 
@@ -32,17 +43,27 @@ export const requestService = {
 
   // BR-024: admin sees everything — staff sees find_property only,
   // including ones already handled by other staff (BR-037: transparency on who handled it)
-async getRequests(role: Role, page: number, limit: number) {
-  const where = role === Role.admin ? {} : { type: RequestType.find_property };
-  const skip  = (page - 1) * limit;
+async getRequests(params: GetRequestsParams) {
+  const { role, userId, page, limit, type, category, propertyType, status, assignedToMe } = params;
+
+  const skip = (page - 1) * limit;
+
+  const where = {
+    ...(role !== Role.admin && { type: RequestType.find_property }),
+    ...(type         && { type             }),
+    ...(category     && { propertyCategory: category     }),
+    ...(propertyType && { propertyType                   }),
+    ...(status       && { status                         }),
+    ...(assignedToMe && { assignedTo:       userId       }),
+  };
 
   const [requests, total, pendingCounts] = await Promise.all([
     prisma.request.findMany({
       where,
       skip,
-      take:     limit,
-      orderBy:  { createdAt: 'desc' },
-      include:  {
+      take:    limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
         assignee: { select: { id: true, name: true, phone: true } },
       },
     }),
