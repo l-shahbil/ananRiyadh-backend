@@ -28,7 +28,7 @@ export const listingsController = {
         minBathrooms: q.minBathrooms ? Number(q.minBathrooms) : undefined,
         maxBathrooms: q.maxBathrooms ? Number(q.maxBathrooms) : undefined,
         page:         q.page         ? Number(q.page)         : 1,
-        limit:        q.limit        ? Number(q.limit)        : 12,
+        limit:        q.limit        ? Number(q.limit)        : 10,
       });
 
       res.json(successResponse(result));
