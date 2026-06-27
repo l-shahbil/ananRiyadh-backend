@@ -43,6 +43,9 @@ app.use('/api/settings', settings);
 app.use('/api/contact', contactRouter);
 app.use('/api/locations', locationsRouter)
 app.use('/', sitemapRouter);
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 
 // Start cron jobs
 startCronJobs();
