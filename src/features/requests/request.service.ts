@@ -32,34 +32,39 @@ export const requestService = {
 
   // BR-024: admin sees everything — staff sees find_property only,
   // including ones already handled by other staff (BR-037: transparency on who handled it)
-  async getRequests(role: Role) {
-    const where = role === Role.admin ? {} : { type: RequestType.find_property };
+async getRequests(role: Role, page: number, limit: number) {
+  const where = role === Role.admin ? {} : { type: RequestType.find_property };
+  const skip  = (page - 1) * limit;
 
-    const [requests, pendingCounts] = await Promise.all([
-      prisma.request.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          assignee: { select: { id: true, name: true, phone: true } },
-        },
-      }),
-      prisma.request.groupBy({
-        by: ['type'],
-        where: { status: RequestStatus.new },
-        _count: { _all: true },
-      }),
-    ]);
+  const [requests, total, pendingCounts] = await Promise.all([
+    prisma.request.findMany({
+      where,
+      skip,
+      take:     limit,
+      orderBy:  { createdAt: 'desc' },
+      include:  {
+        assignee: { select: { id: true, name: true, phone: true } },
+      },
+    }),
+    prisma.request.count({ where }),
+    prisma.request.groupBy({
+      by:    ['type'],
+      where: { status: RequestStatus.new },
+      _count: { _all: true },
+    }),
+  ]);
 
-    const findPropertyPending =
-      pendingCounts.find((c) => c.type === RequestType.find_property)?._count._all ?? 0;
-    const postListingPending =
-      pendingCounts.find((c) => c.type === RequestType.post_listing)?._count._all ?? 0;
+  const findPropertyPending =
+    pendingCounts.find((c) => c.type === RequestType.find_property)?._count._all ?? 0;
+  const postListingPending  =
+    pendingCounts.find((c) => c.type === RequestType.post_listing)?._count._all  ?? 0;
 
-    return {
-      requests,
-      stats: { findPropertyPending, postListingPending },
-    };
-  },
+  return {
+    requests,
+    meta:  { total, page, limit, totalPages: Math.ceil(total / limit) },
+    stats: { findPropertyPending, postListingPending },
+  };
+},
 
   // find_property: any staff or admin can claim it (race — first one wins)
   // post_listing: admin only

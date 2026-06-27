@@ -14,14 +14,17 @@ export const requestController = {
     }
   },
 
-  async getRequests(req: Request, res: Response, next: NextFunction) {
-    try {
-      const result = await requestService.getRequests(req.user!.role as Role)
-      res.json(successResponse(result))
-    } catch (error) {
-      next(error)
-    }
-  },
+ async getRequests(req: Request, res: Response, next: NextFunction) {
+  try {
+    const page  = parseInt(req.query.page  as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 12;
+
+    const result = await requestService.getRequests(req.user!.role as Role, page, limit);
+    res.json(successResponse(result));
+  } catch (error) {
+    next(error);
+  }
+},
 
   async markAsDone(req: Request, res: Response, next: NextFunction) {
     try {
