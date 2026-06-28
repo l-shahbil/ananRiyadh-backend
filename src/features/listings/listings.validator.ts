@@ -42,7 +42,7 @@ export const validateCreateListing = z.object({
     floor:       z.number().int().optional().transform(v => v ?? null),
     totalFloors: z.number().int().min(1).optional().transform(v => v ?? null),
 
-    AdNumber:  z.number().int().optional().transform(v => v ?? null),
+    AdNumber: z.coerce.string().optional().transform(v => v ?? null),
     expiresAt: z.coerce.date({ error: "تاريخ الانتهاء غير صحيح" }).optional().transform(v => v ?? null),
   }),
   params: z.object({}),
@@ -85,7 +85,7 @@ export const validateUpdateListing = z.object({
     floor:       z.number().int().nullable().optional(),
     totalFloors: z.number().int().min(1).nullable().optional(),
 
-    AdNumber:  z.number().int().nullable().optional(),
+    AdNumber: z.coerce.string().nullable().optional(),
     expiresAt: z.coerce.date().nullable().optional(),
   }),
   params: z.object({
