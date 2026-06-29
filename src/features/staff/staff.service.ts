@@ -146,17 +146,24 @@ async updateStaff(
   });
 },
 
-  async suspendStaff(staffId: string) {
-    const staff = await prisma.user.findUnique({ where: { id: staffId, role: Role.staff } });
-    if (!staff) throw new AppError('الموظف غير موجود', 404);
-    if (staff.status === UserStatus.suspended) throw new AppError('الموظف موقوف بالفعل', 400);
+async suspendStaff(staffId: string) {
+  const staff = await prisma.user.findUnique({ where: { id: staffId, role: Role.staff } });
+  if (!staff) throw new AppError('الموظف غير موجود', 404);
+  if (staff.status === UserStatus.suspended) throw new AppError('الموظف موقوف بالفعل', 400);
 
-    return await prisma.user.update({
-      where: { id: staffId },
-      data: { status: UserStatus.suspended },
-      select: { id: true, status: true },
-    });
-  },
+  const admin = await prisma.user.findFirst({ where: { role: Role.admin } });
+  if (!admin) throw new AppError('الأدمن غير موجود', 500);
+
+  return await prisma.user.update({
+    where: { id: staffId },
+    data: {
+      status: UserStatus.suspended,
+      phone: admin.phone,
+      whatsappNumber: admin.whatsappNumber,
+    },
+    select: { id: true, status: true },
+  });
+},
 
   async reactivateStaff(staffId: string) {
     const staff = await prisma.user.findUnique({ where: { id: staffId, role: Role.staff } });
