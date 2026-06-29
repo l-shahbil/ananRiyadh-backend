@@ -14,6 +14,7 @@ interface GetRequestsParams {
   propertyType?: ListingType | undefined;
   status?:       RequestStatus | undefined;
   assignedToMe?: boolean | undefined;
+  staffId?: string | undefined;
 }
 
 export const requestService = {
@@ -44,17 +45,18 @@ export const requestService = {
   // BR-024: admin sees everything — staff sees find_property only,
   // including ones already handled by other staff (BR-037: transparency on who handled it)
 async getRequests(params: GetRequestsParams) {
-  const { role, userId, page, limit, type, category, propertyType, status, assignedToMe } = params;
+  const { role, userId, page, limit, type, category, propertyType, status, assignedToMe,staffId } = params;
 
   const skip = (page - 1) * limit;
 
   const where = {
     ...(role !== Role.admin && { type: RequestType.find_property }),
-    ...(type         && { type             }),
-    ...(category     && { propertyCategory: category     }),
-    ...(propertyType && { propertyType                   }),
-    ...(status       && { status                         }),
-    ...(assignedToMe && { assignedTo:       userId       }),
+    ...(staffId && role === Role.admin && { assignedTo: staffId }),
+    ...(type         && !staffId && { type             }),
+    ...(category     && { propertyCategory: category   }),
+    ...(propertyType && { propertyType                 }),
+    ...(status       && { status                       }),
+    ...(assignedToMe && !staffId && { assignedTo: userId }),
   };
 
   const [requests, total, pendingCounts] = await Promise.all([

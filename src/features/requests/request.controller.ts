@@ -23,6 +23,7 @@ async getRequests(req: Request, res: Response, next: NextFunction) {
     const propertyType = req.query.propertyType as ListingType     | undefined;
     const status       = req.query.status       as RequestStatus   | undefined;
     const assignedToMe = req.query.assignedToMe === 'true';
+    const staffId      = req.query.staffId as string | undefined;
 
     const result = await requestService.getRequests({
       role:        req.user!.role as Role,
@@ -34,6 +35,7 @@ async getRequests(req: Request, res: Response, next: NextFunction) {
       propertyType,
       status,
       assignedToMe,
+       staffId
     });
 
     res.json(successResponse(result));
