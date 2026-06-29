@@ -93,7 +93,7 @@ export const staffService = {
     });
   },
 
- async updateStaff(
+async updateStaff(
   staffId: string,
   input: UpdateStaffInput,
   requestingUser: { id: string; role: Role }
@@ -102,10 +102,9 @@ export const staffService = {
     throw new AppError('لا يمكنك تعديل بيانات موظف آخر', 403);
   }
 
-  const staff = await prisma.user.findUnique({ where: { id: staffId, role: Role.staff } });
-  if (!staff) throw new AppError('الموظف غير موجود', 404);
+  const staff = await prisma.user.findUnique({ where: { id: staffId } });
+  if (!staff) throw new AppError('المستخدم غير موجود', 404);
 
-  // Check for conflicts only on fields being updated
   if (input.email || input.phone) {
     const conditions = [];
     if (input.email) conditions.push({ email: input.email });
@@ -114,12 +113,12 @@ export const staffService = {
     const conflict = await prisma.user.findFirst({
       where: {
         OR: conditions,
-        NOT: { id: staffId }, // exclude current staff
+        NOT: { id: staffId },
       },
     });
 
-    if (conflict?.email === input.email) throw new AppError('البريد الإلكتروني مستخدم بالفعل', 409);
-    if (conflict?.phone === input.phone) throw new AppError('رقم الجوال مستخدم بالفعل', 409);
+    if (conflict?.email && conflict.email === input.email) throw new AppError('البريد الإلكتروني مستخدم بالفعل', 409);
+    if (conflict?.phone && conflict.phone === input.phone) throw new AppError('رقم الجوال مستخدم بالفعل', 409);
   }
 
   const data: Record<string, unknown> = {};
