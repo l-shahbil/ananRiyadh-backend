@@ -262,27 +262,29 @@ export const listingsService = {
     };
   },
 
-  async getMyStats(requesterId: string, isAdmin: boolean, ownerIdQuery: string | undefined) {
-    const targetOwnerId = isAdmin && ownerIdQuery ? ownerIdQuery : requesterId;
+async getMyStats(requesterId: string, isAdmin: boolean, ownerIdQuery: string | undefined) {
+  const targetOwnerId = isAdmin && ownerIdQuery ? ownerIdQuery : requesterId;
 
-    const now           = new Date();
-    const startOfMonth  = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth    = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  const now          = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-    const [active, completed, expiringThisMonth] = await Promise.all([
-      prisma.listing.count({ where: { ownerId: targetOwnerId, status: ListingStatus.active } }),
-      prisma.listing.count({ where: { ownerId: targetOwnerId, status: ListingStatus.completed } }),
-      prisma.listing.count({
-        where: {
-          ownerId:   targetOwnerId,
-          status:    ListingStatus.active,
-          expiresAt: { gte: startOfMonth, lte: endOfMonth },
-        },
-      }),
-    ]);
+  const [active, hidden, completed, expired, expiringThisMonth] = await Promise.all([
+    prisma.listing.count({ where: { ownerId: targetOwnerId, status: ListingStatus.active } }),
+    prisma.listing.count({ where: { ownerId: targetOwnerId, status: ListingStatus.hidden } }),
+    prisma.listing.count({ where: { ownerId: targetOwnerId, status: ListingStatus.completed } }),
+    prisma.listing.count({ where: { ownerId: targetOwnerId, status: ListingStatus.expired } }),
+    prisma.listing.count({
+      where: {
+        ownerId:   targetOwnerId,
+        status:    ListingStatus.active,
+        expiresAt: { gte: startOfMonth, lte: endOfMonth },
+      },
+    }),
+  ]);
 
-    return { active, completed, expiringThisMonth };
-  },
+  return { active, hidden, completed, expired, expiringThisMonth };
+},
 
   async createListing(ownerId: string, data: createListingInput) {
     const city = await prisma.city.findUnique({ where: { id: data.cityId } });

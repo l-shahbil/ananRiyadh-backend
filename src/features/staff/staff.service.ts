@@ -93,42 +93,59 @@ export const staffService = {
     });
   },
 
-  async updateStaff(
-    staffId: string,
-    input: UpdateStaffInput,
-    requestingUser: { id: string; role: Role }
-  ) {
-    if (requestingUser.role === Role.staff && requestingUser.id !== staffId) {
-      throw new AppError('لا يمكنك تعديل بيانات موظف آخر', 403);
-    }
+ async updateStaff(
+  staffId: string,
+  input: UpdateStaffInput,
+  requestingUser: { id: string; role: Role }
+) {
+  if (requestingUser.role === Role.staff && requestingUser.id !== staffId) {
+    throw new AppError('لا يمكنك تعديل بيانات موظف آخر', 403);
+  }
 
-    const staff = await prisma.user.findUnique({ where: { id: staffId, role: Role.staff } });
-    if (!staff) throw new AppError('الموظف غير موجود', 404);
+  const staff = await prisma.user.findUnique({ where: { id: staffId, role: Role.staff } });
+  if (!staff) throw new AppError('الموظف غير موجود', 404);
 
-    const data: Record<string, unknown> = {};
+  // Check for conflicts only on fields being updated
+  if (input.email || input.phone) {
+    const conditions = [];
+    if (input.email) conditions.push({ email: input.email });
+    if (input.phone) conditions.push({ phone: input.phone });
 
-    if (input.name)           data.name           = input.name;
-    if (input.nameEn)         data.nameEn         = input.nameEn;
-    if (input.email)          data.email          = input.email;
-    if (input.phone)          data.phone          = input.phone;
-    if (input.whatsappNumber) data.whatsappNumber = input.whatsappNumber;
-    if (input.telegramChatId) data.telegramChatId = input.telegramChatId;
-    if (input.password)       data.passwordHash   = await bcrypt.hash(input.password, 10);
-
-    return await prisma.user.update({
-      where: { id: staffId },
-      data,
-      select: {
-        id: true,
-        name: true,
-        nameEn: true,
-        email: true,
-        phone: true,
-        status: true,
-        updateAt: true,
+    const conflict = await prisma.user.findFirst({
+      where: {
+        OR: conditions,
+        NOT: { id: staffId }, // exclude current staff
       },
     });
-  },
+
+    if (conflict?.email === input.email) throw new AppError('البريد الإلكتروني مستخدم بالفعل', 409);
+    if (conflict?.phone === input.phone) throw new AppError('رقم الجوال مستخدم بالفعل', 409);
+  }
+
+  const data: Record<string, unknown> = {};
+
+  if (input.name)           data.name           = input.name;
+  if (input.nameEn)         data.nameEn         = input.nameEn;
+  if (input.email)          data.email          = input.email;
+  if (input.phone)          data.phone          = input.phone;
+  if (input.whatsappNumber) data.whatsappNumber = input.whatsappNumber;
+  if (input.telegramChatId) data.telegramChatId = input.telegramChatId;
+  if (input.password)       data.passwordHash   = await bcrypt.hash(input.password, 10);
+
+  return await prisma.user.update({
+    where: { id: staffId },
+    data,
+    select: {
+      id: true,
+      name: true,
+      nameEn: true,
+      email: true,
+      phone: true,
+      status: true,
+      updateAt: true,
+    },
+  });
+},
 
   async suspendStaff(staffId: string) {
     const staff = await prisma.user.findUnique({ where: { id: staffId, role: Role.staff } });
