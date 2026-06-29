@@ -154,28 +154,44 @@ async suspendStaff(staffId: string) {
   const admin = await prisma.user.findFirst({ where: { role: Role.admin } });
   if (!admin) throw new AppError('الأدمن غير موجود', 500);
 
-  return await prisma.user.update({
-    where: { id: staffId },
-    data: {
-      status: UserStatus.suspended,
-      phone: admin.phone,
-      whatsappNumber: admin.whatsappNumber,
-    },
-    select: { id: true, status: true },
-  });
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: staffId },
+      data: { status: UserStatus.suspended },
+    }),
+    prisma.listing.updateMany({
+      where: { ownerId: staffId },
+      data: {
+        phoneOverride: admin.phone,
+        whatsappOverride: admin.whatsappNumber,
+      },
+    }),
+  ]);
+
+  return { id: staffId, status: UserStatus.suspended };
 },
 
-  async reactivateStaff(staffId: string) {
-    const staff = await prisma.user.findUnique({ where: { id: staffId, role: Role.staff } });
-    if (!staff) throw new AppError('الموظف غير موجود', 404);
-    if (staff.status === UserStatus.active) throw new AppError('الموظف نشط بالفعل', 400);
+async reactivateStaff(staffId: string) {
+  const staff = await prisma.user.findUnique({ where: { id: staffId, role: Role.staff } });
+  if (!staff) throw new AppError('الموظف غير موجود', 404);
+  if (staff.status === UserStatus.active) throw new AppError('الموظف نشط بالفعل', 400);
 
-    return await prisma.user.update({
+  await prisma.$transaction([
+    prisma.user.update({
       where: { id: staffId },
       data: { status: UserStatus.active },
-      select: { id: true, status: true },
-    });
-  },
+    }),
+    prisma.listing.updateMany({
+      where: { ownerId: staffId },
+      data: {
+        phoneOverride: null,
+        whatsappOverride: null,
+      },
+    }),
+  ]);
+
+  return { id: staffId, status: UserStatus.active };
+},
 
   async deleteStaff(staffId: string) {
     const staff = await prisma.user.findUnique({

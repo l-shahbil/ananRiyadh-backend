@@ -9,6 +9,9 @@ model Listing {
     descriptionAr String?
     descriptionEn String?
 
+    phoneOverride    String?
+    whatsappOverride String?
+
     category ListingCategory
     type     ListingType
     purpose  ListingPurpose
