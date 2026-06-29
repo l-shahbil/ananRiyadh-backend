@@ -202,7 +202,7 @@ async reactivateStaff(staffId: string) {
     if (!staff) throw new AppError('الموظف غير موجود', 404);
 
     if (staff._count.listings > 0) {
-      throw new AppError('لا يمكن حذف موظف لديه إعلانات — قم بنقل إعلاناته أولاً', 400);
+      throw new AppError('لا يمكن حذف موظف لديه إعلانات — قم بحذف إعلاناته أولاً', 400);
     }
 
     await prisma.user.delete({ where: { id: staffId } });
