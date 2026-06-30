@@ -4,10 +4,12 @@ import { validate } from '../../shared/middleware/Validate.middleware.js';
 import { uploadSingleMiddleware } from '../../shared/middleware/Upload.middleware.js';
 import { createOfferSchema, updateOfferSchema } from './internalOffers.validator.js';
 import { internalOffersController } from './internalOffers.controller.js';
+import {Role} from "@prisma/client"
+
 
 const router = Router();
 
-router.use(authenticate, authorizeRoles('admin', 'staff'));
+router.use(authenticate, authorizeRoles(Role.admin, Role.staff));
 
 router.get('/',     internalOffersController.getAll);
 router.post('/',    uploadSingleMiddleware, validate(createOfferSchema), internalOffersController.create);

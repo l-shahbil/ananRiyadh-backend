@@ -4,6 +4,8 @@ import { authenticate, authorizeRoles } from '../../shared/middleware/Auth.middl
 import { validate } from '../../shared/middleware/Validate.middleware.js';
 import { updateSettingsSchema } from './settings.validator.js';
 import { settingsController } from './settings.controller.js';
+import {Role} from "@prisma/client"
+
 
 const router = Router();
 
@@ -11,6 +13,6 @@ const router = Router();
 router.get('/', settingsController.getSettings);
 
 // Admin only
-router.patch('/', authenticate, authorizeRoles('admin'), validate(updateSettingsSchema), settingsController.updateSettings);
+router.patch('/', authenticate, authorizeRoles(Role.admin), validate(updateSettingsSchema), settingsController.updateSettings);
 
 export default router;

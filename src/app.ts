@@ -14,6 +14,7 @@ import { startCronJobs } from './shared/cron/jobs.js';
 import { errorMiddleware } from './shared/middleware/Error.middleware.js';
 import contactRouter from './features/contact/contact.routes.js';
 import locationsRouter from './features/locations/locations.routes.js'
+import dashboardRouter from './features/dashboard/dashboard.routes.js'
 
 
 
@@ -42,6 +43,7 @@ app.use('/api/internalOffers', inernalOffers);
 app.use('/api/settings', settings);
 app.use('/api/contact', contactRouter);
 app.use('/api/locations', locationsRouter)
+app.use('/api/dashboard', dashboardRouter)
 app.use('/', sitemapRouter);
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
