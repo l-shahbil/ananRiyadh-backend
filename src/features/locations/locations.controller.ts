@@ -51,10 +51,11 @@ async deleteCity(req: Request, res: Response, next: NextFunction) {
   },
 async getDistrictsByCity(req: Request, res: Response, next: NextFunction) {
   try {
-    const districts = await locationsService.getDistrictsByCity(String(req.params.cityId))
-    res.json(successResponse(districts))
+    const withCount = req.query.withCount === 'true';
+    const districts = await locationsService.getDistrictsByCity(String(req.params.cityId), withCount);
+    res.json(successResponse(districts));
   } catch (error) {
-    next(error)
+    next(error);
   }
 },
 

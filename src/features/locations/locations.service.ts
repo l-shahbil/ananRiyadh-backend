@@ -36,15 +36,18 @@ export const locationsService = {
 
   // ===== Districts =====
 
-  async getDistrictsByCity(cityId: string) {
-    const city = await prisma.city.findUnique({ where: { id: cityId } })
-    if (!city) throw new AppError('المدينة غير موجودة', 404)
-    return prisma.district.findMany({
-      where: { cityId },
-      orderBy: { nameAr: 'asc' },
-    })
-  },
+async getDistrictsByCity(cityId: string, withCount = false) {
+  const city = await prisma.city.findUnique({ where: { id: cityId } });
+  if (!city) throw new AppError('المدينة غير موجودة', 404);
 
+  return prisma.district.findMany({
+    where: { cityId },
+    orderBy: { nameAr: 'asc' },
+    ...(withCount && {
+      include: { _count: { select: { listings: true } } },
+    }),
+  });
+},
   async createDistrict(data: CreateDistrictInput) {
     const city = await prisma.city.findUnique({ where: { id: data.cityId } })
     if (!city) throw new AppError('المدينة غير موجودة', 404)
