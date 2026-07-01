@@ -15,6 +15,8 @@ import { errorMiddleware } from './shared/middleware/Error.middleware.js';
 import contactRouter from './features/contact/contact.routes.js';
 import locationsRouter from './features/locations/locations.routes.js'
 import dashboardRouter from './features/dashboard/dashboard.routes.js'
+import { prisma } from "./shared/config/prisma.js";
+
 
 
 
@@ -45,8 +47,27 @@ app.use('/api/contact', contactRouter);
 app.use('/api/locations', locationsRouter)
 app.use('/api/dashboard', dashboardRouter)
 app.use('/', sitemapRouter);
+
+//health
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
+});
+app.get("/health/db", async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+
+    res.status(200).json({
+      status: "ok",
+      database: "connected",
+      timestamp: new Date().toISOString(),
+    });
+  } catch {
+    res.status(503).json({
+      status: "error",
+      database: "disconnected",
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Start cron jobs
