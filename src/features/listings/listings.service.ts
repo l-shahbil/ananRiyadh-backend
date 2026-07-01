@@ -198,7 +198,7 @@ export const listingsService = {
 
     const fetchMore = async (where: object) => {
       const existingIds = [listing.id, ...similar.map((l) => l.id)];
-      const needed = 4 - similar.length;
+      const needed = 3 - similar.length;
       if (needed <= 0) return;
       const results = await prisma.listing.findMany({
         where:   { ...where, NOT: { id: { in: existingIds } } },
