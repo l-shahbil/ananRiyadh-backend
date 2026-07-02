@@ -24,8 +24,6 @@ const app = express();
 
 
 app.set('trust proxy', 1);
-
-console.log(app.get('trust proxy'));
 // Security headers
 app.use(helmet());
 
@@ -39,20 +37,6 @@ app.use(express.json());
 app.use('/api', generalLimiter);
 app.use('/api/auth/login', authLimiter);
 
-//temporary
-app.use((req, res, next) => {
-  const xff = req.headers['x-forwarded-for'];
-
-  console.log('X-Forwarded-For:', xff);
-  console.log('Remote Address:', req.socket.remoteAddress);
-
-  if (typeof xff === 'string') {
-    console.log('IPs:', xff.split(',').map(ip => ip.trim()));
-    console.log('Count:', xff.split(',').length);
-  }
-
-  next();
-});
 
 // Routes
 app.use('/api/auth', authRoutes);
