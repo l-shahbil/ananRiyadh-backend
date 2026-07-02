@@ -22,6 +22,10 @@ import { prisma } from "./shared/config/prisma.js";
 
 const app = express();
 
+
+app.set('trust proxy', 1);
+
+console.log(app.get('trust proxy'));
 // Security headers
 app.use(helmet());
 
