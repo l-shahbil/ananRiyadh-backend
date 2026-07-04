@@ -18,24 +18,28 @@ enum ListingCategory {
 enum ListingType {
   apartment
   floor
-  building
   villa
-  duplex
-  palace
   townhouse
   studio
   room
+  rest_house
+
+  building
   office
   showroom
-  station
-  warehouse
   shop
-  workshop
+  warehouse
+  station
+
+
   factory
-  depot
+  workshop
+
+
   residential_land
   commercial_land
   industrial_land
+
 }
 
 enum ListingPurpose {
