@@ -9,7 +9,6 @@ import staffRouter from './features/staff/staff.routes.js';
 import mediaRouter from './features/media/media.routes.js';
 import inernalOffers from './features/internalOffers/internalOffers.routes.js';
 import settings from './features/setting/settings.routes.js';
-import sitemapRouter from './features/sitemap/sitemap.routes.js';
 import { startCronJobs } from './shared/cron/jobs.js';
 import { errorMiddleware } from './shared/middleware/Error.middleware.js';
 import contactRouter from './features/contact/contact.routes.js';
@@ -49,7 +48,9 @@ app.use('/api/settings', settings);
 app.use('/api/contact', contactRouter);
 app.use('/api/locations', locationsRouter)
 app.use('/api/dashboard', dashboardRouter)
-app.use('/', sitemapRouter);
+app.get('/robots.txt', (_req, res) => {
+  res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+});
 
 //health
 app.get("/health", (_req, res) => {
